@@ -21,7 +21,7 @@ export default function Home() {
 
   return (
     <>
-      <div className="w-[450px] h-[800px] m-auto border relative">
+      <div>
         {
           roomList.map(item => 
             <Link href={`room/${item.id}`}>
