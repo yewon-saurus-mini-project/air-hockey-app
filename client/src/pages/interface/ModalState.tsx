@@ -1,4 +1,4 @@
-export interface ModalState {
+export default interface ModalState {
     title: String;
     description: String;
     content: React.ReactNode;

@@ -5,7 +5,7 @@ import React, { useState } from 'react';
 
 import { Button } from './components/Button';
 import { Modal } from './components/Modal';
-import { ModalState } from './interface/ModalState';
+import { ModalState, NewRoomState } from './interface';
 
 const dummyList = [
   {
@@ -30,7 +30,7 @@ export default function Home() {
     handleClickConfirm: () => {},
     handleClickCancle: () => {}
   });
-  const [newRoomInfo, setNewRoomInfo] = useState({
+  const [newRoomInfo, setNewRoomInfo] = useState<NewRoomState>({
     title: "안녕하세요. 한 수 부탁드립니다. ^^",
     pw: null,
   });
@@ -60,7 +60,7 @@ export default function Home() {
         </div>
         <div className='mt-1'>
           <div>비밀번호 설정</div>
-          <input type='number' className='p-2 w-full' onChange={(e) => setNewRoomInfo((prev) => ({...prev, pw: e.target.value}))} />
+          <input type='number' className='p-2 w-full' onChange={(e) => setNewRoomInfo((prev) => ({...prev, pw: Number(e.target.value)}))} />
         </div>
       </div>
     );
