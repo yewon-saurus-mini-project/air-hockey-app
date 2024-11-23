@@ -1,5 +1,5 @@
 import { useRouter } from "next/router";
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import { ModalState } from "../interface";
 
@@ -48,7 +48,15 @@ export const RoomItem: React.FC<RoomItemProps> = ({ id, title, pw, setModalConte
 
     const handleClickCinfirmButtonOfEnterPrivateRoom = () => {
         if (pwValue === pw) router.push(`room/${id}?isHost=false`);
-    }
+        else alert('비밀번호가 일치하지 않습니다. 다시 시도해 주세요.');
+    };
+
+    useEffect(() => {
+        setModalContent(prev => ({
+            ...prev,
+            handleClickConfirm: handleClickCinfirmButtonOfEnterPrivateRoom,
+          }));
+    }, [pwValue]);
 
     return (
         <div className="cursor-pointer hover:bg-gray-100" onClick={handleClickRoomItem}>

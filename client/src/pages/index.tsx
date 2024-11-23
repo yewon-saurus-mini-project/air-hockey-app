@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 
 import { Button } from './components/Button';
 import { Modal } from './components/Modal';
@@ -68,8 +68,19 @@ export default function Home() {
   }
 
   const handleClickCinfirmButtonOfCreateRoom = () => {
-    // console.log(newRoomInfo); console에서는 최신 값이 아니라 전 값이 나오는데.. console 출력에만 문제가 있는 걸까? => 네
-  }
+    // console.log(newRoomInfo); console에서는 최신 값이 아니라 전 값이 나오는데.. console 출력에만 문제가 있는 걸까? => 아님.. 클로저에 대해 잘 생각해 보시길
+    // useCallback 이용해 봤다가, 그 시점에서의 문제가 아니라는 것을 깨달음
+    // useEffect 이용해서 의도한대로 작동하도록 수정..
+    // TODO: 더 좋은 방법을 생각해 보자
+    console.log(newRoomInfo);
+  };
+
+  useEffect(() => {
+    setModalContent(prev => ({
+      ...prev,
+      handleClickConfirm: handleClickCinfirmButtonOfCreateRoom,
+    }));
+  }, [newRoomInfo]);
 
   return (
     <>
