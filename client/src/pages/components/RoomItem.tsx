@@ -1,0 +1,66 @@
+import { useRouter } from "next/router";
+import { useState } from "react";
+
+import { ModalState } from "../interface";
+
+interface RoomItemProps {
+    id: String;
+    title: String;
+    pw: Number | null;
+    setModalContent: React.Dispatch<React.SetStateAction<ModalState>>;
+    handleClickModal: () => Promise<void>;
+}
+
+export const RoomItem: React.FC<RoomItemProps> = ({ id, title, pw, setModalContent, handleClickModal }) => {
+    const [pwValue, setPwValue] = useState(0);
+    
+    const router = useRouter();
+
+    const handleClickRoomItem = async () => {
+        if (pw) {
+            setModalContent(prev => ({
+                ...prev,
+                title: "방 입장",
+                description: `(${id})${title}`,
+                content: <EnterPrivateRoomForm />,
+                handleClickConfirm: handleClickCinfirmButtonOfEnterPrivateRoom,
+              }));
+
+            setTimeout(async () => {
+                await handleClickModal();
+            }, 0);
+        }
+        else {
+            router.push(`room/${id}?isHost=false`);
+        }
+    }
+
+    const EnterPrivateRoomForm: React.FC = () => {
+        return (
+            <div>
+                <div>
+                    <div>비밀방입니다. 비밀번호를 입력하세요. (숫자)</div>
+                    <input type="number" className='p-2 w-full' onChange={(e) => {setPwValue(Number(e.target.value))}} />
+                </div>
+            </div>
+        );
+    }
+
+    const handleClickCinfirmButtonOfEnterPrivateRoom = () => {
+        if (pwValue === pw) router.push(`room/${id}?isHost=false`);
+    }
+
+    return (
+        <div className="cursor-pointer hover:bg-gray-100" onClick={handleClickRoomItem}>
+            <div className='p-3 border'>
+            <div className='text-xs text-gray-400'>{id}</div>
+            <div>{title}</div>
+            <div className='text-xl'>
+                {
+                pw ? '🔒' : '🔓'
+                }
+            </div>
+            </div>
+        </div>
+    );
+}
