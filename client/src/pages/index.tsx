@@ -1,6 +1,8 @@
 'use client';
 
 import React, { useCallback, useEffect, useState } from 'react';
+import { useRouter } from 'next/router';
+import { io } from 'socket.io-client';
 
 import { Button } from './components/Button';
 import { Modal } from './components/Modal';
@@ -8,21 +10,10 @@ import { RoomItem } from './components/RoomItem';
 
 import { ModalState, NewRoomState } from './interface';
 
-const dummyList = [
-  {
-    id: "kj9g7v5yq3kx",
-    title: "안녕하세요. 한 수 부탁드립니다. ^^",
-    pw: 1234,
-  },
-  {
-    id: "asdf11asdf11",
-    title: "안녕하세요. 두 수 부탁드립니다. ^^",
-    pw: null,
-  },
-];
+const socketInstance = io(process.env.NEXT_PUBLIC_API_URL);
 
 export default function Home() {
-  const [roomList, setRoomList] = useState(dummyList);
+  const [roomList, setRoomList] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [modalContent, setModalContent] = useState<ModalState>({
     title: "제목",
@@ -35,6 +26,8 @@ export default function Home() {
     title: "안녕하세요. 한 수 부탁드립니다. ^^",
     pw: null,
   });
+
+  const router = useRouter();
 
   const handleClickModal = async () => setShowModal(!showModal);
 
@@ -72,7 +65,16 @@ export default function Home() {
     // useCallback 이용해 봤다가, 그 시점에서의 문제가 아니라는 것을 깨달음
     // useEffect 이용해서 의도한대로 작동하도록 수정..
     // TODO: 더 좋은 방법을 생각해 보자
-    console.log(newRoomInfo);
+    const { title, pw } = newRoomInfo;
+    socketInstance.emit('createRoom', { title, pw });
+
+    socketInstance.on('roomCreated', (createdRoomId) => {
+      router.push(`room/${createdRoomId}?isHost=false`);
+    });
+
+      socketInstance.on('error', (errorMessage) => {
+        alert(`에러가 발생했습니다. 다시 시도해 주세요.\n\n${errorMessage}`);
+    });
   };
 
   useEffect(() => {

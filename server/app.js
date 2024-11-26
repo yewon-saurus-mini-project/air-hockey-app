@@ -19,6 +19,8 @@ const socketio = new Server(server, {
 // CORS 미들웨어 설정
 app.use(cors({ origin: CLIENT_URL }));
 
+const rooms = {};
+
 // 기본 라우팅
 app.get('/', (req, res) => {
     res.send('Hello, Express!');
@@ -28,8 +30,30 @@ app.get('/', (req, res) => {
 socketio.on('connection', (socket) => {
     console.log('클라이언트 연결됨: ', socket.id);
 
+    // 방 생성
+    socket.on('createRoom', ({ title, pw }) => {
+        rooms[socket.id] = { 
+            title,
+            pw,
+        };
+        socket.join(title);
+        console.log(`${socket.id} created room: ${socket.id}`);
+        socket.emit('roomCreated', socket.id);
+    });
+
+    // 방 참가
+    socket.on('joinRoom', (hostId) => {
+        socket.join(hostId);
+        console.log(`${socket.id} joined room: ${hostId}`);
+        io.to(hostId).emit('playerJoined', socket.id);
+    });
+
+    // 클라이언트가 연결 해제 시 방에서 제거
     socket.on('disconnect', () => {
-        console.log('클라이언트 연결 종료:', socket.id);
+        for (const roomName in rooms) {
+            delete rooms[roomName]; // 빈 방 삭제
+        }
+        console.log('User disconnected:', socket.id);
     });
 });
 
