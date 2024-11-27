@@ -19,7 +19,7 @@ const socketio = new Server(server, {
 // CORS 미들웨어 설정
 app.use(cors({ origin: CLIENT_URL }));
 
-const rooms = {};
+let rooms = {};
 
 // 기본 라우팅
 app.get('/', (req, res) => {
@@ -30,6 +30,11 @@ app.get('/', (req, res) => {
 socketio.on('connection', (socket) => {
     console.log('클라이언트 연결됨: ', socket.id);
 
+    // 방 목록
+    socket.on('getRooms', () => {
+        socketio.emit('roomList', rooms);
+    });
+
     // 방 생성
     socket.on('createRoom', ({ title, pw }) => {
         rooms[socket.id] = { 
@@ -37,7 +42,7 @@ socketio.on('connection', (socket) => {
             pw,
         };
         socket.join(title);
-        console.log(`${socket.id} created room: ${socket.id}`);
+        console.log(`created room: ${socket.id}`);
         socket.emit('roomCreated', socket.id);
     });
 
@@ -49,12 +54,12 @@ socketio.on('connection', (socket) => {
     });
 
     // 클라이언트가 연결 해제 시 방에서 제거
-    socket.on('disconnect', () => {
-        for (const roomName in rooms) {
-            delete rooms[roomName]; // 빈 방 삭제
-        }
-        console.log('User disconnected:', socket.id);
-    });
+    // socket.on('disconnect', () => {
+    //     for (const roomName in rooms) {
+    //         delete rooms[roomName]; // 빈 방 삭제
+    //     }
+    //     console.log('User disconnected:', socket.id);
+    // });
 });
 
 // 서버 시작

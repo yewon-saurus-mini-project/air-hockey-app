@@ -13,7 +13,7 @@ import { ModalState, NewRoomState } from './interface';
 const socketInstance = io(process.env.NEXT_PUBLIC_API_URL);
 
 export default function Home() {
-  const [roomList, setRoomList] = useState([]);
+  const [roomList, setRoomList] = useState({});
   const [showModal, setShowModal] = useState(false);
   const [modalContent, setModalContent] = useState<ModalState>({
     title: "제목",
@@ -29,6 +29,18 @@ export default function Home() {
 
   const router = useRouter();
 
+  useEffect(() => {
+    socketInstance.emit('getRooms');
+
+    socketInstance.on('roomList', (updatedRooms) => {
+      setRoomList(updatedRooms);
+    });
+
+    // return () => {
+    //   socketInstance.disconnect();
+    // }
+  }, []);
+
   const handleClickModal = async () => setShowModal(!showModal);
 
   const handleClickCreateRoom = async () => {
@@ -43,6 +55,10 @@ export default function Home() {
     setTimeout(async () => {
       await handleClickModal();
     }, 0); // setTimeout 0: 비동기적인 방식으로 이벤트 루프의 다음 실행 queue로 작업을 지연 시킴!! 권장되는 방법은 아니라는 듯
+  }
+
+  const handleClickRefresh = () => {
+    socketInstance.emit('getRooms');
   }
 
   const CreateRoomForm: React.FC = () => {
@@ -88,17 +104,17 @@ export default function Home() {
     <>
       <div>
         {
-          roomList.map(item => 
-            <RoomItem
-              id={item.id} title={item.title} pw={item.pw}
+          Object.entries(roomList).map(([key, value]) => (
+            <RoomItem key={key}
+              id={key} title={value.title} pw={value.pw}
               setModalContent={setModalContent}
               handleClickModal={handleClickModal}
             />
-          )
+          ))
         }
         <div className='absolute right-6 bottom-6 z-10 grid grid-rows-2 gap-2'>
           <Button name={'방 생성'} onClick={handleClickCreateRoom} />
-          <Button name={'새로고침'} onClick={() => {window.location.reload()}} />
+          <Button name={'새로고침'} onClick={handleClickRefresh} />
         </div>
       </div>
       {
