@@ -54,12 +54,10 @@ socketio.on('connection', (socket) => {
     });
 
     // 클라이언트가 연결 해제 시 방에서 제거
-    // socket.on('disconnect', () => {
-    //     for (const roomName in rooms) {
-    //         delete rooms[roomName]; // 빈 방 삭제
-    //     }
-    //     console.log('User disconnected:', socket.id);
-    // });
+    socket.on('disconnect', () => {
+        delete rooms[socket.id]; // 빈 방 삭제
+        console.log('User disconnected:', socket.id);
+    });
 });
 
 // 서버 시작
