@@ -40,7 +40,6 @@ socketio.on('connection', (socket) => {
         rooms[socket.id] = { 
             title,
             pw,
-            players: [socket.id],
         };
         socket.join(socket.id);
         console.log(`created room: ${socket.id}`);
@@ -50,7 +49,6 @@ socketio.on('connection', (socket) => {
 
     // 방 참가
     socket.on('joinRoom', (roomId) => {
-        rooms[roomId].players.push(socket.id);
         socket.join(roomId);
         console.log(`${socket.id} joined roomId: ${roomId}`);
         socketio.to(roomId).emit('playerJoined', socket.id);
@@ -65,9 +63,17 @@ socketio.on('connection', (socket) => {
         socket.broadcast.emit('roomList', rooms);
     });
 
+    // 상대방 paddle 위치 동기화
+    socket.on('sendOpponentLocation', ({ id, paddleX, paddleY }) => {
+        // id: roomId
+        console.log(id, paddleX, paddleY);
+        socket.broadcast.in(id).emit("reciveOpponentLocation", { paddleX, paddleY });
+    });
+
     // 클라이언트가 연결 해제 시 방에서 제거
     socket.on('disconnect', () => {
         delete rooms[socket.id]; // 빈 방 삭제
+        socket.broadcast.emit('roomList', rooms);
         console.log('User disconnected:', socket.id);
     });
 });

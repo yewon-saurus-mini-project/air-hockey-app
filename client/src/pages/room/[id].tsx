@@ -23,9 +23,10 @@ const Room: NextPage<{}> = () => {
         const hostPaddle = hostPaddleRef.current;
         const guestStage = guestStageRef.current;
         const guestPaddle = guestPaddleRef.current;
-
+        
         let stageRect: DOMRect | null = null;
         let paddle: HTMLDivElement | null = null;
+        let opponentPaddle: HTMLDivElement | null = null;
 
         const handleMouseMove = (e) => {
             let mouseX = e.clientX - stageRect!.left;
@@ -39,9 +40,14 @@ const Room: NextPage<{}> = () => {
             mouseX = Math.max(minX, Math.min(maxX, mouseX));
             mouseY = Math.max(minY, Math.min(maxY, mouseY));
 
-            paddle!.style.left = `${mouseX - 28}px`;
-            paddle!.style.top = `${mouseY - 28}px`;
+            const [paddleX, paddleY] = [`${mouseX - 28}px`, `${mouseY - 28}px`];
+
+            paddle!.style.left = paddleX;
+            paddle!.style.top = paddleY;
+
+            socketInstance.emit("sendOpponentLocation", { id, paddleX, paddleY });
         }
+        window?.addEventListener("mousemove", handleMouseMove);
 
         if (isHost === 'false') {
             setIsReady(true);
@@ -49,18 +55,28 @@ const Room: NextPage<{}> = () => {
 
             stageRect = guestStage!.getBoundingClientRect();
             paddle = guestPaddle;
+            opponentPaddle = hostPaddle;
         }
         else {
             stageRect = hostStage!.getBoundingClientRect();
             paddle = hostPaddle;
+            opponentPaddle = guestPaddle;
         }
-        window?.addEventListener("mousemove", handleMouseMove);
 
         socketInstance.on('roomReady', () => {
             setIsReady(true);
         });
 
-    }, []);
+        socketInstance.on('reciveOpponentLocation', ({ paddleX, paddleY }) => {          
+            console.log(paddleX, paddleY);
+            opponentPaddle!.style.left = paddleX;
+            opponentPaddle!.style.top = paddleY;
+        });
+
+        return () => {
+            window?.removeEventListener("mousemove", handleMouseMove);
+        };
+    }, [hostPaddleRef, guestPaddleRef]);
 
     return (
         <>
@@ -73,7 +89,10 @@ const Room: NextPage<{}> = () => {
                         <div>0 : 0</div>
                     </div>
                     :
-                    <Button name={'나가기'} onClick={() => {router.push('/')}} />
+                    <Button name={'나가기'} onClick={() => {
+                        router.push('/')
+                        socketInstance.disconnect();
+                    }} />
                 }
             </div>
             <div>
