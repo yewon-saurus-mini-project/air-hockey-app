@@ -40,6 +40,7 @@ socketio.on('connection', (socket) => {
         rooms[socket.id] = { 
             title,
             pw,
+            players: [socket.id],
         };
         socket.join(socket.id);
         console.log(`created room: ${socket.id}`);
@@ -49,9 +50,19 @@ socketio.on('connection', (socket) => {
 
     // 방 참가
     socket.on('joinRoom', (roomId) => {
+        rooms[roomId].players.push(socket.id);
         socket.join(roomId);
         console.log(`${socket.id} joined roomId: ${roomId}`);
         socketio.to(roomId).emit('playerJoined', socket.id);
+    });
+
+    // 플레어아 참가 시, 호스트 상태 변화
+    socket.on('playerEntered', (roomId) => {
+        socket.to(roomId).emit('roomReady');
+        console.log(`room ready ${roomId}`);
+
+        delete rooms[roomId]; // 빈 방 삭제(플레이어 2명 모집 완료된 상황에서, 더이상 모집 목록에 보이지 않게)
+        socket.broadcast.emit('roomList', rooms);
     });
 
     // 클라이언트가 연결 해제 시 방에서 제거

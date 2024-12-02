@@ -2,7 +2,6 @@
 
 import React, { useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
-import { io } from 'socket.io-client';
 
 import { Button } from './components/Button';
 import { Modal } from './components/Modal';
@@ -10,7 +9,7 @@ import { RoomItem } from './components/RoomItem';
 
 import { ModalState, NewRoomState } from './interface';
 
-const socketInstance = io(process.env.NEXT_PUBLIC_API_URL);
+import { useSocket } from './_lib/useSocket';
 
 export default function Home() {
   const [roomList, setRoomList] = useState({});
@@ -26,6 +25,7 @@ export default function Home() {
     title: "안녕하세요. 한 수 부탁드립니다. ^^",
     pw: null,
   });
+  const socketInstance = useSocket();
 
   const router = useRouter();
 
@@ -85,7 +85,7 @@ export default function Home() {
     socketInstance.emit('createRoom', { title, pw });
 
     socketInstance.on('roomCreated', (createdRoomId) => {
-      router.push(`room/${createdRoomId}?isHost=false`);
+      router.push(`room/${createdRoomId}?isHost=true`);
     });
 
       socketInstance.on('error', (errorMessage) => {
