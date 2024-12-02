@@ -2,6 +2,7 @@ import { useRouter } from "next/router";
 import { useCallback, useEffect, useState } from "react";
 
 import { ModalState } from "../interface";
+import { Socket } from "socket.io-client";
 
 interface RoomItemProps {
     id: String;
@@ -9,9 +10,10 @@ interface RoomItemProps {
     pw: Number | null;
     setModalContent: React.Dispatch<React.SetStateAction<ModalState>>;
     handleClickModal: () => Promise<void>;
+    socketInstance: Socket,
 }
 
-export const RoomItem: React.FC<RoomItemProps> = ({ id, title, pw, setModalContent, handleClickModal }) => {
+export const RoomItem: React.FC<RoomItemProps> = ({ id, title, pw, setModalContent, handleClickModal, socketInstance }) => {
     const [pwValue, setPwValue] = useState(0);
     
     const router = useRouter();
@@ -31,6 +33,7 @@ export const RoomItem: React.FC<RoomItemProps> = ({ id, title, pw, setModalConte
             }, 0);
         }
         else {
+            socketInstance.emit("joinRoom", id);
             router.push(`room/${id}?isHost=false`);
         }
     }
@@ -47,7 +50,10 @@ export const RoomItem: React.FC<RoomItemProps> = ({ id, title, pw, setModalConte
     }
 
     const handleClickCinfirmButtonOfEnterPrivateRoom = () => {
-        if (pwValue === pw) router.push(`room/${id}?isHost=false`);
+        if (pwValue === pw) {
+            socketInstance.emit("joinRoom", title);
+            router.push(`room/${id}?isHost=false`);
+        }
         else alert('비밀번호가 일치하지 않습니다. 다시 시도해 주세요.');
     };
 

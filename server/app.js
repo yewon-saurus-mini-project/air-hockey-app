@@ -41,17 +41,17 @@ socketio.on('connection', (socket) => {
             title,
             pw,
         };
-        socket.join(title);
+        socket.join(socket.id);
         console.log(`created room: ${socket.id}`);
         socket.emit('roomCreated', socket.id);
         socket.broadcast.emit('roomCreateOtherUser', rooms);
     });
 
     // 방 참가
-    socket.on('joinRoom', (hostId) => {
-        socket.join(hostId);
-        console.log(`${socket.id} joined room: ${hostId}`);
-        io.to(hostId).emit('playerJoined', socket.id);
+    socket.on('joinRoom', (roomId) => {
+        socket.join(roomId);
+        console.log(`${socket.id} joined roomId: ${roomId}`);
+        socketio.to(roomId).emit('playerJoined', socket.id);
     });
 
     // 클라이언트가 연결 해제 시 방에서 제거

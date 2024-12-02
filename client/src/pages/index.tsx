@@ -109,6 +109,7 @@ export default function Home() {
               id={key} title={value.title} pw={value.pw}
               setModalContent={setModalContent}
               handleClickModal={handleClickModal}
+              socketInstance={socketInstance}
             />
           ))
         }
