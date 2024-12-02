@@ -44,6 +44,7 @@ socketio.on('connection', (socket) => {
         socket.join(title);
         console.log(`created room: ${socket.id}`);
         socket.emit('roomCreated', socket.id);
+        socket.broadcast.emit('roomCreateOtherUser', rooms);
     });
 
     // 방 참가

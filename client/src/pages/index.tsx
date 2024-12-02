@@ -36,6 +36,10 @@ export default function Home() {
       setRoomList(updatedRooms);
     });
 
+    socketInstance.on('roomCreateOtherUser', (updatedRooms) => {
+      setRoomList(updatedRooms);
+    });
+
     // return () => {
     //   socketInstance.disconnect();
     // }
@@ -55,10 +59,6 @@ export default function Home() {
     setTimeout(async () => {
       await handleClickModal();
     }, 0); // setTimeout 0: 비동기적인 방식으로 이벤트 루프의 다음 실행 queue로 작업을 지연 시킴!! 권장되는 방법은 아니라는 듯
-  }
-
-  const handleClickRefresh = () => {
-    socketInstance.emit('getRooms');
   }
 
   const CreateRoomForm: React.FC = () => {
@@ -112,9 +112,8 @@ export default function Home() {
             />
           ))
         }
-        <div className='absolute right-6 bottom-6 z-10 grid grid-rows-2 gap-2'>
+        <div className='absolute right-6 bottom-6 z-10'>
           <Button name={'방 생성'} onClick={handleClickCreateRoom} />
-          <Button name={'새로고침'} onClick={handleClickRefresh} />
         </div>
       </div>
       {
