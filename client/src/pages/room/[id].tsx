@@ -8,7 +8,7 @@ import { useSocket } from "../_lib/useSocket";
 
 const Room: NextPage<{}> = () => {
     const router = useRouter();
-    const {id, isHost} = router.query;
+    const {id, isHost} = router.query; // id: roomName
     const socketInstance = useSocket();
 
     const [isReady, setIsReady] = useState(false);

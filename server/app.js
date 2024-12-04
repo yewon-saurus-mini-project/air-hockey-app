@@ -37,13 +37,14 @@ socketio.on('connection', (socket) => {
 
     // 방 생성
     socket.on('createRoom', ({ title, pw }) => {
-        rooms[socket.id] = { 
+        const roomName = `room-${socket.id}`
+        rooms[roomName] = { 
             title,
             pw,
         };
-        socket.join(socket.id);
-        console.log(`created room: ${socket.id}`);
-        socket.emit('roomCreated', socket.id);
+        socket.join(roomName);
+        console.log(`created room: ${roomName}`);
+        socket.emit('roomCreated', roomName);
         socket.broadcast.emit('roomCreateOtherUser', rooms);
     });
 
@@ -51,7 +52,6 @@ socketio.on('connection', (socket) => {
     socket.on('joinRoom', (roomId) => {
         socket.join(roomId);
         console.log(`${socket.id} joined roomId: ${roomId}`);
-        socketio.to(roomId).emit('playerJoined', socket.id);
     });
 
     // 플레어아 참가 시, 호스트 상태 변화
@@ -66,13 +66,13 @@ socketio.on('connection', (socket) => {
     // 상대방 paddle 위치 동기화
     socket.on('sendOpponentLocation', ({ id, paddleX, paddleY }) => {
         // id: roomId
-        console.log(id, paddleX, paddleY);
         socket.broadcast.in(id).emit("reciveOpponentLocation", { paddleX, paddleY });
     });
 
     // 클라이언트가 연결 해제 시 방에서 제거
     socket.on('disconnect', () => {
-        delete rooms[socket.id]; // 빈 방 삭제
+        const roomName = `room-${socket.id}`;
+        delete rooms[roomName]; // 빈 방 삭제
         socket.broadcast.emit('roomList', rooms);
         console.log('User disconnected:', socket.id);
     });
