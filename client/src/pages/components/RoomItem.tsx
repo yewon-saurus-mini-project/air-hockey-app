@@ -51,7 +51,7 @@ export const RoomItem: React.FC<RoomItemProps> = ({ id, title, pw, setModalConte
 
     const handleClickCinfirmButtonOfEnterPrivateRoom = () => {
         if (pwValue === pw) {
-            socketInstance.emit("joinRoom", title);
+            socketInstance.emit("joinRoom", id);
             router.push(`room/${id}?isHost=false`);
         }
         else alert('비밀번호가 일치하지 않습니다. 다시 시도해 주세요.');
