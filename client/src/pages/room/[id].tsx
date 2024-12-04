@@ -50,17 +50,15 @@ const Room: NextPage<{}> = () => {
         window?.addEventListener("mousemove", handleMouseMove);
 
         if (isHost === 'false') {
-            setIsReady(true);
-            socketInstance.emit('playerEntered', id);
-
             stageRect = guestStage!.getBoundingClientRect();
-            paddle = guestPaddle;
-            opponentPaddle = hostPaddle;
+            [paddle, opponentPaddle] = [guestPaddle, hostPaddle];
+            
+            socketInstance.emit('playerEntered', id);
+            setIsReady(true);
         }
         else {
             stageRect = hostStage!.getBoundingClientRect();
-            paddle = hostPaddle;
-            opponentPaddle = guestPaddle;
+            [paddle, opponentPaddle] = [hostPaddle, guestPaddle];
         }
 
         socketInstance.on('roomReady', () => {
@@ -76,7 +74,7 @@ const Room: NextPage<{}> = () => {
         return () => {
             window?.removeEventListener("mousemove", handleMouseMove);
         };
-    }, [hostPaddleRef, guestPaddleRef]);
+    }, [isReady]);
 
     return (
         <>
