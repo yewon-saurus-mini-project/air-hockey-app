@@ -7,7 +7,7 @@ import { Button } from './components/Button';
 import { Modal } from './components/Modal';
 import { RoomItem } from './components/RoomItem';
 
-import { ModalState, NewRoomState } from './interface';
+import { ModalState, NewRoomState } from './model';
 
 import { useSocket } from './_lib/useSocket';
 

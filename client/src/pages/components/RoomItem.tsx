@@ -1,7 +1,7 @@
 import { useRouter } from "next/router";
 import { useCallback, useEffect, useState } from "react";
 
-import { ModalState } from "../interface";
+import { ModalState } from "../model";
 import { Socket } from "socket.io-client";
 
 interface RoomItemProps {

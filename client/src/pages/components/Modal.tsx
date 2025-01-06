@@ -1,4 +1,4 @@
-import { ModalState } from "../interface";
+import { ModalState } from "../model";
 
 export const Modal: React.FC<ModalState> = ({ title, description, content, handleClickConfirm, handleClickCancle }) => {
     return (
