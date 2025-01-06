@@ -1,6 +1,6 @@
 export default interface ModalState {
-    title: String;
-    description: String;
+    title: string;
+    description: string;
     content: React.ReactNode;
     handleClickConfirm: () => void;
     handleClickCancle: () => void;

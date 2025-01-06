@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/router';
 
 import { Button } from './components/Button';
@@ -62,11 +62,17 @@ export default function Home() {
   }
 
   const CreateRoomForm: React.FC = () => {
+    const titleRef = useRef<HTMLInputElement | null>(null);
+
+    useEffect(() => {
+      if (titleRef.current) titleRef.current.value = newRoomInfo.title;
+    });
+
     return (
       <div>
         <div>
           <div>* 방 제목</div>
-          <input className='p-2 w-full' onChange={(e) => setNewRoomInfo((prev) => ({...prev, title: e.target.value}))} />
+          <input ref={titleRef} className='p-2 w-full' onChange={(e) => setNewRoomInfo((prev) => ({...prev, title: e.target.value}))} />
         </div>
         <div className='mt-1'>
           <div>비밀번호 설정</div>

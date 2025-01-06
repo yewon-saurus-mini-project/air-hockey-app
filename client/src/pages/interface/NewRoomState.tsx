@@ -1,4 +1,4 @@
 export default interface NewRoomState {
-    title: String;
+    title: string;
     pw: number | null;
 }
