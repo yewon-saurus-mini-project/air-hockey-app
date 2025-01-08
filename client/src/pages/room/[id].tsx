@@ -13,6 +13,7 @@ const Room: NextPage<{}> = () => {
 
     const [isReady, setIsReady] = useState(false);
 
+    const wholeStageRef = useRef<HTMLDivElement | null>(null);
     const hostStageRef = useRef<HTMLDivElement | null>(null);
     const hostPaddleRef = useRef<HTMLDivElement | null>(null);
     const guestStageRef = useRef<HTMLDivElement | null>(null);
@@ -28,7 +29,7 @@ const Room: NextPage<{}> = () => {
         let paddle: HTMLDivElement | null = null;
         let opponentPaddle: HTMLDivElement | null = null;
 
-        const handleMouseMove = (e) => {
+        const handleMouseMove = (e: any) => {
             let mouseX = e.clientX - stageRect!.left;
             let mouseY = e.clientY - stageRect!.top;
 
@@ -52,6 +53,9 @@ const Room: NextPage<{}> = () => {
         if (isHost === 'false') {
             stageRect = guestStage!.getBoundingClientRect();
             [paddle, opponentPaddle] = [guestPaddle, hostPaddle];
+            if (hostStageRef.current) {
+                hostStageRef.current.style.transform = `rotate(-180deg)`;
+            }
             
             socketInstance.emit('playerEntered', id);
             setIsReady(true);
@@ -59,6 +63,11 @@ const Room: NextPage<{}> = () => {
         else {
             stageRect = hostStage!.getBoundingClientRect();
             [paddle, opponentPaddle] = [hostPaddle, guestPaddle];
+
+            if (wholeStageRef.current && hostStageRef.current) {
+                wholeStageRef.current.style.transform = `rotate(180deg)`;
+                hostStageRef.current.style.transform = `rotate(-180deg)`;
+            }
         }
 
         socketInstance.on('roomReady', () => {
@@ -92,7 +101,7 @@ const Room: NextPage<{}> = () => {
                     }} />
                 }
             </div>
-            <div>
+            <div ref={wholeStageRef}>
                 <div ref={hostStageRef} className="bg-red-100 h-[399px] relative">
                     <div ref={hostPaddleRef} className="w-14 h-14 bg-black border-white border rounded-full absolute pointer-events-none"></div>
                 </div>
