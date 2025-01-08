@@ -12,6 +12,7 @@ const Room: NextPage<{}> = () => {
     const socketInstance = useSocket();
 
     const [isReady, setIsReady] = useState(false);
+    const [countdownTime, setCountdownTime] = useState(5);
 
     const wholeStageRef = useRef<HTMLDivElement | null>(null);
     const hostStageRef = useRef<HTMLDivElement | null>(null);
@@ -82,17 +83,41 @@ const Room: NextPage<{}> = () => {
         return () => {
             window?.removeEventListener("mousemove", handleMouseMove);
         };
-    }, [isReady]);
+    }, []);
+
+    useEffect(() => {
+        if (countdownTime <= 0) return;
+
+        if (isReady) {
+            if (isHost === 'true') {
+                const remainingTime = countdownTime - 1;
+
+                setTimeout(() => {
+                    setCountdownTime(remainingTime);
+                    socketInstance.emit('startCountdown', remainingTime);
+                }, 1000);
+            }
+    
+            socketInstance.on('syncCountdown', (countdownTime) => {
+                setCountdownTime(countdownTime);
+            });
+        }
+    }, [isReady, countdownTime]);
 
     return (
         <>
             <div className='absolute left-3 top-3 z-10'>
                 {
-                    isReady
+                    countdownTime === 0
                     ?
                     <div className="text-center">
                         <div>Black : White</div>
                         <div>0 : 0</div>
+                    </div>
+                    : isReady
+                    ?
+                    <div className="absolute -left-3 -top-3 bg-black text-white text-9xl w-[450px] h-[798px] leading-[798px] text-center">
+                        {countdownTime}
                     </div>
                     :
                     <Button name={'나가기'} onClick={() => {

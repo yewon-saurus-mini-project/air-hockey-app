@@ -63,6 +63,10 @@ socketio.on('connection', (socket) => {
         socket.broadcast.emit('roomList', rooms);
     });
 
+    socket.on('startCountdown', (countdownTime) => {
+        socket.broadcast.emit('syncCountdown', countdownTime);
+    });
+
     // 상대방 paddle 위치 동기화
     socket.on('sendOpponentLocation', ({ id, paddleX, paddleY }) => {
         // id: roomId
