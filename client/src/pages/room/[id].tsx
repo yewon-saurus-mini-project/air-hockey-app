@@ -66,7 +66,6 @@ const Room: NextPage<{}> = () => {
         });
 
         socketInstance.on('reciveOpponentLocation', ({ paddleX, paddleY }) => {          
-            console.log(paddleX, paddleY);
             opponentPaddle!.style.left = paddleX;
             opponentPaddle!.style.top = paddleY;
         });
