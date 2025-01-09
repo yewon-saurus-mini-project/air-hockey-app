@@ -19,6 +19,7 @@ const Room: NextPage<{}> = () => {
     const hostPaddleRef = useRef<HTMLDivElement | null>(null);
     const guestStageRef = useRef<HTMLDivElement | null>(null);
     const guestPaddleRef = useRef<HTMLDivElement | null>(null);
+    const puckRef = useRef<HTMLDivElement | null>(null);
 
     useEffect(() => {
         const hostStage = hostStageRef.current;
@@ -129,11 +130,23 @@ const Room: NextPage<{}> = () => {
             <div ref={wholeStageRef}>
                 <div ref={hostStageRef} className="bg-red-100 h-[399px] relative">
                     <div ref={hostPaddleRef} className="w-14 h-14 bg-black border-white border rounded-full absolute pointer-events-none"></div>
+                    <div className="top-[391px] left-[95px] absolute w-60 h-1 bg-red-300 rounded-full"></div>
                 </div>
                 <div ref={guestStageRef} className="bg-blue-100 h-[399px] relative">
                     <div ref={guestPaddleRef} className="w-14 h-14 bg-white border-black border rounded-full absolute pointer-events-none"></div>
+                    <div className="top-[391px] left-[95px] absolute w-60 h-1 bg-blue-300 rounded-full"></div>
                 </div>
-                <div>퍽</div>
+                {
+                    countdownTime === 0
+                    ?
+                    <div ref={puckRef} className="left-[204px] top-[378px] w-10 h-10 bg-gray-400 border-black border rounded-full absolute pointer-events-none">
+                        <div className="w-6 h-6 bg-gray-300 border-black border rounded-full absolute pointer-events-none m-[7px]">
+                            {/* 퍽 */}
+                        </div>
+                    </div>
+                    :
+                    ''
+                }
             </div>
         </>
     );
