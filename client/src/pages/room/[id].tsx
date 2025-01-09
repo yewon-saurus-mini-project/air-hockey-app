@@ -133,6 +133,7 @@ const Room: NextPage<{}> = () => {
                 <div ref={guestStageRef} className="bg-blue-100 h-[399px] relative">
                     <div ref={guestPaddleRef} className="w-14 h-14 bg-white border-black border rounded-full absolute pointer-events-none"></div>
                 </div>
+                <div>퍽</div>
             </div>
         </>
     );

@@ -30,6 +30,8 @@ export default function Home() {
   const router = useRouter();
 
   useEffect(() => {
+    socketInstance.connect();
+
     socketInstance.emit('getRooms');
 
     socketInstance.on('roomList', (updatedRooms) => {
