@@ -31,6 +31,7 @@ const Room: NextPage<{}> = () => {
         let paddle: HTMLDivElement | null = null;
         let opponentPaddle: HTMLDivElement | null = null;
 
+        // 마우스 조작 시, 마우스 커서 위치와 paddle 위치 동기화
         const handleMouseMove = (e: any) => {
             let mouseX = e.clientX - stageRect!.left;
             let mouseY = e.clientY - stageRect!.top;
@@ -48,34 +49,41 @@ const Room: NextPage<{}> = () => {
             paddle!.style.left = paddleX;
             paddle!.style.top = paddleY;
 
+            // 상대방에 paddle 위치 전송
             socketInstance.emit("sendOpponentLocation", { id, paddleX, paddleY });
         }
         window?.addEventListener("mousemove", handleMouseMove);
 
+        // 호스트 여부에 따른 기준 paddle 설정
         if (isHost === 'false') {
             stageRect = guestStage!.getBoundingClientRect();
             [paddle, opponentPaddle] = [guestPaddle, hostPaddle];
-            if (hostStageRef.current) {
-                hostStageRef.current.style.transform = `rotate(-180deg)`;
-            }
             
             socketInstance.emit('playerEntered', id);
             setIsReady(true);
+
+            // 플레이어 기준 자신의 stage가 아래에 향하도록 조치 (1/2)
+            if (hostStageRef.current) {
+                hostStageRef.current.style.transform = `rotate(-180deg)`;
+            }
         }
         else {
             stageRect = hostStage!.getBoundingClientRect();
             [paddle, opponentPaddle] = [hostPaddle, guestPaddle];
 
+            // 플레이어 기준 자신의 stage가 아래에 향하도록 조치 (2/2)
             if (wholeStageRef.current && hostStageRef.current) {
                 wholeStageRef.current.style.transform = `rotate(180deg)`;
                 hostStageRef.current.style.transform = `rotate(-180deg)`;
             }
         }
 
+        // ready 완료
         socketInstance.on('roomReady', () => {
             setIsReady(true);
         });
 
+        // 상대방 paddle 위치 동기화
         socketInstance.on('reciveOpponentLocation', ({ paddleX, paddleY }) => {          
             opponentPaddle!.style.left = paddleX;
             opponentPaddle!.style.top = paddleY;
@@ -87,6 +95,7 @@ const Room: NextPage<{}> = () => {
     }, []);
 
     useEffect(() => {
+        // 게스트 입장 시, 카운트 다운
         if (countdownTime <= 0) return;
 
         if (isReady) {
@@ -100,6 +109,7 @@ const Room: NextPage<{}> = () => {
             }
     
             socketInstance.on('syncCountdown', (countdownTime) => {
+                // 상대방과 카운트 상황 동기화
                 setCountdownTime(countdownTime);
             });
         }
