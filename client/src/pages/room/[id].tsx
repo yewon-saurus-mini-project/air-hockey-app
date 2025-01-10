@@ -5,41 +5,51 @@ import { useEffect, useState, useRef } from "react";
 import { Button } from "../components/Button";
 
 import { useSocket } from "../_lib/useSocket";
+import { getCircleInfo, areCirclesColliding } from "../_lib/collision";
 
 const Room: NextPage<{}> = () => {
     const router = useRouter();
     const {id, isHost} = router.query; // id: roomName
     const socketInstance = useSocket();
 
+    const [realMouse, setRealMouse] = useState({
+        x: 0,
+        y: 0,
+    });
     const [isReady, setIsReady] = useState(false);
     const [countdownTime, setCountdownTime] = useState(5);
 
-    const wholeStageRef = useRef<HTMLDivElement | null>(null);
-    const hostStageRef = useRef<HTMLDivElement | null>(null);
-    const hostPaddleRef = useRef<HTMLDivElement | null>(null);
-    const guestStageRef = useRef<HTMLDivElement | null>(null);
-    const guestPaddleRef = useRef<HTMLDivElement | null>(null);
+    const wholeStageRef = useRef<HTMLDivElement>(null);
+    const hostStageRef = useRef<HTMLDivElement>(null);
+    const hostPaddleRef = useRef<HTMLDivElement>(null);
+    const guestStageRef = useRef<HTMLDivElement>(null);
+    const guestPaddleRef = useRef<HTMLDivElement>(null);
     const puckRef = useRef<HTMLDivElement | null>(null);
+
+    let stageRect: DOMRect | null = null;
+    let paddle: HTMLDivElement | null = null;
+    let opponentPaddle: HTMLDivElement | null = null;
 
     useEffect(() => {
         const hostStage = hostStageRef.current;
         const hostPaddle = hostPaddleRef.current;
         const guestStage = guestStageRef.current;
         const guestPaddle = guestPaddleRef.current;
-        
-        let stageRect: DOMRect | null = null;
-        let paddle: HTMLDivElement | null = null;
-        let opponentPaddle: HTMLDivElement | null = null;
 
         // 마우스 조작 시, 마우스 커서 위치와 paddle 위치 동기화
         const handleMouseMove = (e: any) => {
-            let mouseX = e.clientX - stageRect!.left;
-            let mouseY = e.clientY - stageRect!.top;
-
             const minX = 28;
             const maxX = stageRect!.width - 28;
             const minY = 28;
             const maxY = stageRect!.height - 28;
+            
+            setRealMouse({
+                x: e.clientX,
+                y: e.clientY,
+            });
+
+            let mouseX = e.clientX - stageRect!.left;
+            let mouseY = e.clientY - stageRect!.top;
 
             mouseX = Math.max(minX, Math.min(maxX, mouseX));
             mouseY = Math.max(minY, Math.min(maxY, mouseY));
@@ -114,6 +124,60 @@ const Room: NextPage<{}> = () => {
             });
         }
     }, [isReady, countdownTime]);
+
+    useEffect(() => {
+        let player: HTMLDivElement | null = null;
+        let opponent: HTMLDivElement | null = null;
+
+        if (isHost === 'false') [player, opponent] = [guestPaddleRef.current, hostPaddleRef.current];
+        else [player, opponent] = [hostPaddleRef.current, guestPaddleRef.current];
+
+        const checkCollision = () => {
+            if (player && puckRef.current) {
+                // 요소의 위치와 크기 계산
+                const playerCircle = getCircleInfo(player);
+                const opponentCircle = getCircleInfo(opponent);
+                const puckCircle = getCircleInfo(puckRef.current);
+        
+                // 충돌 여부 확인
+                const isCollidingWithPuck = areCirclesColliding(playerCircle!, puckCircle!);
+                const isCollidingWithOpponent = areCirclesColliding(playerCircle!, opponentCircle!);
+                const isCollidingWithWholeStage = () => {
+                    const wholeStageRect = wholeStageRef.current?.getBoundingClientRect();
+                    const puckRect = puckRef.current?.getBoundingClientRect();
+
+                    const collision = {
+                        top: puckRect!.top == wholeStageRect!.top,
+                        right: puckRect!.right == wholeStageRect!.right,
+                        bottom: puckRect!.bottom == wholeStageRect!.bottom,
+                        left: puckRect!.left == wholeStageRect!.left,
+                    };
+
+                    return collision;
+                }
+        
+                if (isCollidingWithPuck) {
+                    console.log('hi');
+                }
+                else if (isCollidingWithOpponent) {
+                    console.log('hehe');
+                }
+                else if (
+                    isCollidingWithWholeStage().top
+                    || isCollidingWithWholeStage().right
+                    || isCollidingWithWholeStage().bottom
+                    || isCollidingWithWholeStage().left
+                ) {
+                    console.log('ouch!');
+                }
+                // else {
+                //     console.log('wow');
+                // }
+            }
+        };
+        
+        checkCollision();
+    }), [realMouse];
 
     return (
         <>
