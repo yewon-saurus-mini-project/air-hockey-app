@@ -18,6 +18,16 @@ const Room: NextPage<{}> = () => {
     });
     const [isReady, setIsReady] = useState(false);
     const [countdownTime, setCountdownTime] = useState(5);
+    const [puckPhysics, setPuckPhysics] = useState({
+        position: {
+            x: 204,
+            y: 378,
+        },
+        velocity: {
+            x: Math.floor(Math.random() * 10) - 5,  // -5 ~ 5 사이에서 랜덤 정수 추출하기
+            y: Math.floor(Math.random() * 10) - 5,
+        },
+    });
 
     const wholeStageRef = useRef<HTMLDivElement>(null);
     const hostStageRef = useRef<HTMLDivElement>(null);
@@ -106,7 +116,15 @@ const Room: NextPage<{}> = () => {
 
     useEffect(() => {
         // 게스트 입장 시, 카운트 다운
-        if (countdownTime <= 0) return;
+        if (countdownTime <= 0) {
+            // puck 첫 등장
+            const puck = puckRef.current;
+            
+            puck!.style.left = `${puckPhysics.position.x}px`;
+            puck!.style.top = `${puckPhysics.position.y}px`;
+
+            return;
+        };
 
         if (isReady) {
             if (isHost === 'true') {
@@ -132,52 +150,87 @@ const Room: NextPage<{}> = () => {
         if (isHost === 'false') [player, opponent] = [guestPaddleRef.current, hostPaddleRef.current];
         else [player, opponent] = [hostPaddleRef.current, guestPaddleRef.current];
 
-        const checkCollision = () => {
+        const position = { x: puckPhysics.position.x, y: puckPhysics.position.y };
+        const velocity = { x: puckPhysics.velocity.x, y: puckPhysics.velocity.y };
+        
+        const update = () => {
             if (player && puckRef.current) {
+                const puck = puckRef.current;
+
+                position.x += velocity.x;
+                position.y += velocity.y;
+    
+                puck!.style.left = `${position.x}px`;
+                puck!.style.top = `${position.y}px`;
+    
+                setPuckPhysics({
+                    position: {
+                        x: position.x,
+                        y: position.y,
+                    },
+                    velocity: {
+                        x: velocity.x,
+                        y: velocity.y,
+                    },
+                });
+
                 // 요소의 위치와 크기 계산
                 const playerCircle = getCircleInfo(player);
                 const opponentCircle = getCircleInfo(opponent);
                 const puckCircle = getCircleInfo(puckRef.current);
-        
-                // 충돌 여부 확인
-                const isCollidingWithPuck = areCirclesColliding(playerCircle!, puckCircle!);
-                const isCollidingWithOpponent = areCirclesColliding(playerCircle!, opponentCircle!);
                 const isCollidingWithWholeStage = () => {
                     const wholeStageRect = wholeStageRef.current?.getBoundingClientRect();
                     const puckRect = puckRef.current?.getBoundingClientRect();
 
                     const collision = {
-                        top: puckRect!.top == wholeStageRect!.top,
-                        right: puckRect!.right == wholeStageRect!.right,
-                        bottom: puckRect!.bottom == wholeStageRect!.bottom,
-                        left: puckRect!.left == wholeStageRect!.left,
+                        top: puckRect!.top <= wholeStageRect!.top + 2,
+                        right: puckRect!.right >= wholeStageRect!.right - 2,
+                        bottom: puckRect!.bottom >= wholeStageRect!.bottom - 2,
+                        left: puckRect!.left <= wholeStageRect!.left + 2,
                     };
 
                     return collision;
                 }
+
+                // 충돌 여부 확인
+                const isCollidingWithPlayer = areCirclesColliding(playerCircle!, puckCircle!);
+                const isCollidingWithOpponent = areCirclesColliding(playerCircle!, opponentCircle!);
         
-                if (isCollidingWithPuck) {
-                    console.log('hi');
+                if (isCollidingWithPlayer) {
+                    velocity.x += realMouse.x - position.x < 0 ? position.x - realMouse.x : realMouse.x - position.x;
+                    velocity.x *= 0.01;
+                    velocity.y += realMouse.y - position.y < 0 ? position.y - realMouse.y : realMouse.y - position.y;
+                    velocity.y *= 0.01;
                 }
                 else if (isCollidingWithOpponent) {
                     console.log('hehe');
                 }
-                else if (
-                    isCollidingWithWholeStage().top
-                    || isCollidingWithWholeStage().right
-                    || isCollidingWithWholeStage().bottom
-                    || isCollidingWithWholeStage().left
-                ) {
-                    console.log('ouch!');
+                else if (isCollidingWithWholeStage().left) {
+                    velocity.x *= -1;
+                    velocity.x = velocity.x - velocity.x * 0.5;
                 }
-                // else {
-                //     console.log('wow');
-                // }
+                else if (isCollidingWithWholeStage().right) {
+                    velocity.x *= -1;
+                    velocity.x = velocity.x + velocity.x * 0.5;
+                }
+                else if (isCollidingWithWholeStage().top) {
+                    velocity.y *= -1;
+                    velocity.y = velocity.y + velocity.y * 0.5;
+                }
+                else if (isCollidingWithWholeStage().bottom) {
+                    velocity.y *= -1;
+                    velocity.y = velocity.y - velocity.y * 0.5;
+                }
             }
-        };
-        
-        checkCollision();
-    }), [realMouse];
+            requestAnimationFrame(update);
+        }
+
+        if (isHost === 'true') requestAnimationFrame(update);
+
+        return () => {
+            cancelAnimationFrame(update as unknown as number);
+        }
+    }, [puckRef]);
 
     return (
         <>
@@ -213,7 +266,7 @@ const Room: NextPage<{}> = () => {
                 {
                     countdownTime === 0
                     ?
-                    <div ref={puckRef} className="left-[204px] top-[378px] w-10 h-10 bg-gray-400 border-black border rounded-full absolute pointer-events-none">
+                    <div ref={puckRef} className="w-10 h-10 bg-gray-400 border-black border rounded-full absolute pointer-events-none">
                         <div className="w-6 h-6 bg-gray-300 border-black border rounded-full absolute pointer-events-none m-[7px]">
                             {/* 퍽 */}
                         </div>
