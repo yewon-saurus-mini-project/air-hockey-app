@@ -7,6 +7,10 @@ import { Button } from "../components/Button";
 import { useSocket } from "../_lib/useSocket";
 import { getCircleInfo, areCirclesColliding } from "../_lib/collision";
 
+const STAGE_PADDING = 5;
+const MINIMUM_SPEED = 2;
+const MAXIMUM_SPEED = 8;
+
 const Room: NextPage<{}> = () => {
     const router = useRouter();
     const {id, isHost} = router.query; // id: roomName
@@ -147,19 +151,33 @@ const Room: NextPage<{}> = () => {
         let player: HTMLDivElement | null = null;
         let opponent: HTMLDivElement | null = null;
 
-        if (isHost === 'false') [player, opponent] = [guestPaddleRef.current, hostPaddleRef.current];
-        else [player, opponent] = [hostPaddleRef.current, guestPaddleRef.current];
+        if (isHost === 'true') [player, opponent] = [hostPaddleRef.current, guestPaddleRef.current];
+        else return; // puck의 움직임, 충돌 처리는 모두 host에서 관리 및 전달
 
         const position = { x: puckPhysics.position.x, y: puckPhysics.position.y };
         const velocity = { x: puckPhysics.velocity.x, y: puckPhysics.velocity.y };
+        let collisionCooldown = false; // 충돌 처리 쿨다운
         
         const update = () => {
             if (player && puckRef.current) {
                 const puck = puckRef.current;
 
+                if (collisionCooldown) {
+                    // 충돌 쿨다운 중이라면 위치만 갱신
+                    puck!.style.left = `${position.x}px`;
+                    puck!.style.top = `${position.y}px`;
+                    setTimeout(() => {
+                        collisionCooldown = false;
+                    }, 50);
+                    requestAnimationFrame(update);
+                    return;
+                }
+                
+                console.log(velocity);
+
+                // puck 위치 업데이트
                 position.x += velocity.x;
                 position.y += velocity.y;
-    
                 puck!.style.left = `${position.x}px`;
                 puck!.style.top = `${position.y}px`;
     
@@ -178,54 +196,87 @@ const Room: NextPage<{}> = () => {
                 const playerCircle = getCircleInfo(player);
                 const opponentCircle = getCircleInfo(opponent);
                 const puckCircle = getCircleInfo(puckRef.current);
-                const isCollidingWithWholeStage = () => {
-                    const wholeStageRect = wholeStageRef.current?.getBoundingClientRect();
-                    const puckRect = puckRef.current?.getBoundingClientRect();
-
-                    const collision = {
-                        top: puckRect!.top <= wholeStageRect!.top + 2,
-                        right: puckRect!.right >= wholeStageRect!.right - 2,
-                        bottom: puckRect!.bottom >= wholeStageRect!.bottom - 2,
-                        left: puckRect!.left <= wholeStageRect!.left + 2,
-                    };
-
-                    return collision;
-                }
+                const wholeStageRect = wholeStageRef.current?.getBoundingClientRect();
+                const puckRect = puckRef.current?.getBoundingClientRect();
 
                 // 충돌 여부 확인
                 const isCollidingWithPlayer = areCirclesColliding(playerCircle!, puckCircle!);
-                const isCollidingWithOpponent = areCirclesColliding(playerCircle!, opponentCircle!);
+                const isCollidingWithOpponent = areCirclesColliding(opponentCircle!, puckCircle!);
+                const collision = {
+                    left: puckRect!.left <= wholeStageRect!.left + STAGE_PADDING,
+                    right: puckRect!.right >= wholeStageRect!.right - STAGE_PADDING,
+                    top: puckRect!.top <= wholeStageRect!.top + STAGE_PADDING,
+                    bottom: puckRect!.bottom >= wholeStageRect!.bottom - STAGE_PADDING,
+                };
         
                 if (isCollidingWithPlayer) {
-                    velocity.x += realMouse.x - position.x < 0 ? position.x - realMouse.x : realMouse.x - position.x;
-                    velocity.x *= 0.01;
-                    velocity.y += realMouse.y - position.y < 0 ? position.y - realMouse.y : realMouse.y - position.y;
-                    velocity.y *= 0.01;
+                    velocity.x += (realMouse.x - position.x < 0 ? position.x - realMouse.x : realMouse.x - position.x) * 0.01;
+                    velocity.y += (realMouse.y - position.y < 0 ? position.y - realMouse.y : realMouse.y - position.y) * 0.01;
+
+                    if (Math.abs(velocity.x) > MAXIMUM_SPEED) {
+                        if (velocity.x > 0) velocity.x = MAXIMUM_SPEED
+                        else velocity.x = -MAXIMUM_SPEED
+                    }
+                    if (Math.abs(velocity.y) > MAXIMUM_SPEED) {
+                        if (velocity.y > 0) velocity.y = MAXIMUM_SPEED
+                        else velocity.y = -MAXIMUM_SPEED
+                    }
                 }
                 else if (isCollidingWithOpponent) {
                     console.log('hehe');
                 }
-                else if (isCollidingWithWholeStage().left) {
+                else if (collision.left) {
+                    collisionCooldown = true;
+                    velocity.x = velocity.x + velocity.x * 0.3;
                     velocity.x *= -1;
-                    velocity.x = velocity.x - velocity.x * 0.5;
+
+                    // 위치, 속도 보정
+                    if (position.x < wholeStageRect!.left) position.x = wholeStageRect!.left + STAGE_PADDING;
+                    if (Math.abs(velocity.x) < MINIMUM_SPEED) {
+                        if (velocity.x > 0) velocity.x = MINIMUM_SPEED;
+                        else velocity.x = -MINIMUM_SPEED;
+                    }
                 }
-                else if (isCollidingWithWholeStage().right) {
+                else if (collision.right) {
+                    collisionCooldown = true;
+                    velocity.x = velocity.x - velocity.x * 0.3;
                     velocity.x *= -1;
-                    velocity.x = velocity.x + velocity.x * 0.5;
+
+                    // 위치, 속도 보정
+                    if (position.x > wholeStageRect!.right) position.x = wholeStageRect!.right - STAGE_PADDING;
+                    if (Math.abs(velocity.x) < MINIMUM_SPEED) {
+                        if (velocity.x > 0) velocity.x = MINIMUM_SPEED;
+                        else velocity.x = -MINIMUM_SPEED;
+                    }
                 }
-                else if (isCollidingWithWholeStage().top) {
+                else if (collision.top) {
+                    collisionCooldown = true;
+                    velocity.y = velocity.y - velocity.y * 0.3;
                     velocity.y *= -1;
-                    velocity.y = velocity.y + velocity.y * 0.5;
+
+                    // 위치, 속도 보정
+                    if (position.y < wholeStageRect!.top) position.y = wholeStageRect!.top + STAGE_PADDING;
+                    if (Math.abs(velocity.y) < MINIMUM_SPEED) {
+                        if (velocity.y > 0) velocity.y = MINIMUM_SPEED;
+                        else velocity.y = -MINIMUM_SPEED;
+                    }
                 }
-                else if (isCollidingWithWholeStage().bottom) {
+                else if (collision.bottom) {
+                    collisionCooldown = true;
+                    velocity.y = velocity.y + velocity.y * 0.3;
                     velocity.y *= -1;
-                    velocity.y = velocity.y - velocity.y * 0.5;
+
+                    // 위치, 속도 보정
+                    if (position.y > wholeStageRect!.bottom) position.y = wholeStageRect!.bottom - STAGE_PADDING;
+                    if (Math.abs(velocity.y) < MINIMUM_SPEED) {
+                        if (velocity.y > 0) velocity.y = MINIMUM_SPEED;
+                        else velocity.y = -MINIMUM_SPEED;
+                    }
                 }
             }
             requestAnimationFrame(update);
         }
-
-        if (isHost === 'true') requestAnimationFrame(update);
+        update();
 
         return () => {
             cancelAnimationFrame(update as unknown as number);
