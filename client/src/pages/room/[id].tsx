@@ -10,6 +10,16 @@ import { getCircleInfo, areCirclesColliding } from "../_lib/collision";
 const STAGE_PADDING = 5;
 const MINIMUM_SPEED = 2;
 const MAXIMUM_SPEED = 8;
+const INITIAL_PUCK_PHYSICS = {
+    position: {
+        x: 204,
+        y: 378,
+    },
+    velocity: {
+        x: Math.floor(Math.random() * 10) - 5,  // -5 ~ 5 사이에서 랜덤 정수 추출하기
+        y: Math.floor(Math.random() * 10) - 5,
+    },
+};
 
 const Room: NextPage<{}> = () => {
     const router = useRouter();
@@ -22,15 +32,10 @@ const Room: NextPage<{}> = () => {
     });
     const [isReady, setIsReady] = useState(false);
     const [countdownTime, setCountdownTime] = useState(5);
-    const [puckPhysics, setPuckPhysics] = useState({
-        position: {
-            x: 204,
-            y: 378,
-        },
-        velocity: {
-            x: Math.floor(Math.random() * 10) - 5,  // -5 ~ 5 사이에서 랜덤 정수 추출하기
-            y: Math.floor(Math.random() * 10) - 5,
-        },
+    const [puckPhysics, setPuckPhysics] = useState(INITIAL_PUCK_PHYSICS);
+    const [points, setPoints] = useState({
+        black: 0,
+        white: 0,
     });
 
     const wholeStageRef = useRef<HTMLDivElement>(null);
@@ -39,6 +44,8 @@ const Room: NextPage<{}> = () => {
     const guestStageRef = useRef<HTMLDivElement>(null);
     const guestPaddleRef = useRef<HTMLDivElement>(null);
     const puckRef = useRef<HTMLDivElement | null>(null);
+    const hostGoalPostRef = useRef<HTMLDivElement>(null);
+    const guestGoalPostRef = useRef<HTMLDivElement>(null);
 
     let stageRect: DOMRect | null = null;
     let paddle: HTMLDivElement | null = null;
@@ -148,6 +155,7 @@ const Room: NextPage<{}> = () => {
     }, [isReady, countdownTime]);
 
     useEffect(() => {
+        // 게임 준비가 완료되어 puck이 생성된 시점
         let player: HTMLDivElement | null = null;
         let opponent: HTMLDivElement | null = null;
 
@@ -172,8 +180,6 @@ const Room: NextPage<{}> = () => {
                     requestAnimationFrame(update);
                     return;
                 }
-                
-                console.log(velocity);
 
                 // puck 위치 업데이트
                 position.x += velocity.x;
@@ -198,10 +204,14 @@ const Room: NextPage<{}> = () => {
                 const puckCircle = getCircleInfo(puckRef.current);
                 const wholeStageRect = wholeStageRef.current?.getBoundingClientRect();
                 const puckRect = puckRef.current?.getBoundingClientRect();
+                const hostGoalPostRect = hostGoalPostRef.current?.getBoundingClientRect();
+                const guestGoalPostRect = guestGoalPostRef.current?.getBoundingClientRect();
 
                 // 충돌 여부 확인
                 const isCollidingWithPlayer = areCirclesColliding(playerCircle!, puckCircle!);
                 const isCollidingWithOpponent = areCirclesColliding(opponentCircle!, puckCircle!);
+                const isCollidingWithHostGoalPost = (puckRect!.left >= hostGoalPostRect!.left && puckRect!.right <= hostGoalPostRect!.right && puckRect.bottom >= hostGoalPostRect!.top);
+                const isCollidingWithGuestGoalPost = (puckRect!.left >= guestGoalPostRect!.left && puckRect!.right <= guestGoalPostRect!.right && puckRect.top <= guestGoalPostRect!.bottom);
                 const collision = {
                     left: puckRect!.left <= wholeStageRect!.left + STAGE_PADDING,
                     right: puckRect!.right >= wholeStageRect!.right - STAGE_PADDING,
@@ -214,16 +224,32 @@ const Room: NextPage<{}> = () => {
                     velocity.y += (realMouse.y - position.y < 0 ? position.y - realMouse.y : realMouse.y - position.y) * 0.01;
 
                     if (Math.abs(velocity.x) > MAXIMUM_SPEED) {
-                        if (velocity.x > 0) velocity.x = MAXIMUM_SPEED
-                        else velocity.x = -MAXIMUM_SPEED
+                        if (velocity.x > 0) velocity.x = MAXIMUM_SPEED;
+                        else velocity.x = -MAXIMUM_SPEED;
                     }
                     if (Math.abs(velocity.y) > MAXIMUM_SPEED) {
-                        if (velocity.y > 0) velocity.y = MAXIMUM_SPEED
-                        else velocity.y = -MAXIMUM_SPEED
+                        if (velocity.y > 0) velocity.y = MAXIMUM_SPEED;
+                        else velocity.y = -MAXIMUM_SPEED;
                     }
                 }
                 else if (isCollidingWithOpponent) {
                     console.log('hehe');
+                }
+                else if (isCollidingWithHostGoalPost) {
+                    // guest(white) 득점
+                    setPoints((prev) => ({...prev, white: prev.white + 1}));
+                    // setPuckPhysics(INITIAL_PUCK_PHYSICS);
+                    // puck!.style.left = `${INITIAL_PUCK_PHYSICS.position.x}px`;
+                    // puck!.style.top = `${INITIAL_PUCK_PHYSICS.position.y}px`;
+                    // setCountdownTime(3);
+                }
+                else if (isCollidingWithGuestGoalPost) {
+                    // host(black) 득점
+                    setPoints((prev) => ({...prev, black: prev.black + 1}));
+                    // setPuckPhysics(INITIAL_PUCK_PHYSICS);
+                    // puck!.style.left = `${INITIAL_PUCK_PHYSICS.position.x}px`;
+                    // puck!.style.top = `${INITIAL_PUCK_PHYSICS.position.y}px`;
+                    // setCountdownTime(3);
                 }
                 else if (collision.left) {
                     collisionCooldown = true;
@@ -291,11 +317,11 @@ const Room: NextPage<{}> = () => {
                     ?
                     <div className="text-center">
                         <div>Black : White</div>
-                        <div>0 : 0</div>
+                        <div>{`${points.black} : ${points.white}`}</div>
                     </div>
                     : isReady
                     ?
-                    <div className="absolute -left-3 -top-3 bg-black text-white text-9xl w-[450px] h-[798px] leading-[798px] text-center">
+                    <div className="absolute -left-3 -top-3 bg-black bg-opacity-30 text-white text-9xl w-[450px] h-[798px] leading-[798px] text-center">
                         {countdownTime}
                     </div>
                     :
@@ -308,11 +334,11 @@ const Room: NextPage<{}> = () => {
             <div ref={wholeStageRef}>
                 <div ref={hostStageRef} className="bg-red-100 h-[399px] relative">
                     <div ref={hostPaddleRef} className="w-14 h-14 bg-black border-white border rounded-full absolute pointer-events-none"></div>
-                    <div className="top-[391px] left-[95px] absolute w-60 h-1 bg-red-300 rounded-full"></div>
+                    <div ref={hostGoalPostRef} className="top-[391px] left-[95px] absolute w-60 h-1 bg-red-300 rounded-full"></div>
                 </div>
                 <div ref={guestStageRef} className="bg-blue-100 h-[399px] relative">
                     <div ref={guestPaddleRef} className="w-14 h-14 bg-white border-black border rounded-full absolute pointer-events-none"></div>
-                    <div className="top-[391px] left-[95px] absolute w-60 h-1 bg-blue-300 rounded-full"></div>
+                    <div ref={guestGoalPostRef} className="top-[391px] left-[95px] absolute w-60 h-1 bg-blue-300 rounded-full"></div>
                 </div>
                 {
                     countdownTime === 0
