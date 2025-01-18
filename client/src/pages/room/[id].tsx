@@ -255,8 +255,13 @@ const Room: NextPage<{}> = () => {
                     // guest(white) 득점
                     collisionCooldown = true;
                     setPuckPhysics(INITIAL_PUCK_PHYSICS);
-                    if (points.black === 0 && points.white === 0) setPoints({black: 0, white: 1}); // TODO: 첫 골에서 점수 카운팅이 '2'씩 됨.. 임시 조치
-                    else setPoints((prev) => ({...prev, white: prev.white + 1}));
+
+                    let updatedPoints = points;
+                    if (points.black === 0 && points.white === 0) updatedPoints = {black: 0, white: 1}; // TODO: 첫 골에서 점수 카운팅이 '2'씩 됨.. 임시 조치
+                    else updatedPoints = { ...updatedPoints, white: updatedPoints.white + 1 };
+                    setPoints(updatedPoints);
+                    socketInstance.emit("sendPoints", { id, updatedPoints });
+                    
                     setCountdownTime(3);
                     socketInstance.emit('startCountdown', 3);
                     return;
@@ -265,8 +270,13 @@ const Room: NextPage<{}> = () => {
                     // host(black) 득점
                     collisionCooldown = true;
                     setPuckPhysics(INITIAL_PUCK_PHYSICS);
-                    if (points.black === 0 && points.white === 0) setPoints({black: 1, white: 0}); // TODO: 첫 골에서 점수 카운팅이 '2'씩 됨.. 임시 조치
-                    else setPoints((prev) => ({...prev, black: prev.black + 1}));
+                    
+                    let updatedPoints = points;
+                    if (points.black === 0 && points.white === 0) updatedPoints = {black: 1, white: 0}; // TODO: 첫 골에서 점수 카운팅이 '2'씩 됨.. 임시 조치
+                    else updatedPoints = { ...updatedPoints, black: updatedPoints.black + 1 };
+                    setPoints(updatedPoints);
+                    socketInstance.emit("sendPoints", { id, updatedPoints });
+
                     setCountdownTime(3);
                     socketInstance.emit('startCountdown', 3);
                     return;
@@ -349,7 +359,15 @@ const Room: NextPage<{}> = () => {
         return () => {
             cancelAnimationFrame(update as unknown as number);
         }
-    }, [puckRef, points]);
+    }, [puckRef]);
+
+    useEffect(() => {
+        if (isHost === 'true') return;
+
+        socketInstance.on('recivePoints', ({ updatedPoints }) => {
+            setPoints(updatedPoints);
+        });
+    }, [points]);
 
     useEffect(() => {
         if (points.white >= POINT_NEEDED_TO_WIN || points.black >= POINT_NEEDED_TO_WIN) {
