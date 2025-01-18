@@ -220,8 +220,8 @@ const Room: NextPage<{}> = () => {
                 };
         
                 if (isCollidingWithPlayer) {
-                    velocity.x += (realMouse.x - position.x < 0 ? position.x - realMouse.x : realMouse.x - position.x) * 0.01;
-                    velocity.y += (realMouse.y - position.y < 0 ? position.y - realMouse.y : realMouse.y - position.y) * 0.01;
+                    velocity.x += (playerCircle!.centerX - position.x < 0 ? position.x - playerCircle!.centerX : playerCircle!.centerX - position.x) * 0.01;
+                    velocity.y += (playerCircle!.centerY - position.y < 0 ? position.y - playerCircle!.centerY : playerCircle!.centerY - position.y) * 0.01;
 
                     if (Math.abs(velocity.x) > MAXIMUM_SPEED) {
                         if (velocity.x > 0) velocity.x = MAXIMUM_SPEED;
@@ -233,7 +233,17 @@ const Room: NextPage<{}> = () => {
                     }
                 }
                 else if (isCollidingWithOpponent) {
-                    console.log('hehe');
+                    velocity.x += (opponentCircle!.centerX - position.x > 0 ? position.x - opponentCircle!.centerX : opponentCircle!.centerX - position.x) * 0.01;
+                    velocity.y += (opponentCircle!.centerY - position.y > 0 ? position.y - opponentCircle!.centerY : opponentCircle!.centerY - position.y) * 0.01;
+
+                    if (Math.abs(velocity.x) > MAXIMUM_SPEED) {
+                        if (velocity.x > 0) velocity.x = MAXIMUM_SPEED;
+                        else velocity.x = -MAXIMUM_SPEED;
+                    }
+                    if (Math.abs(velocity.y) > MAXIMUM_SPEED) {
+                        if (velocity.y > 0) velocity.y = MAXIMUM_SPEED;
+                        else velocity.y = -MAXIMUM_SPEED;
+                    }
                 }
                 else if (isCollidingWithHostGoalPost) {
                     // guest(white) 득점
