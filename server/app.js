@@ -63,6 +63,7 @@ socketio.on('connection', (socket) => {
         socket.broadcast.emit('roomList', rooms);
     });
 
+    // 카운트 다운
     socket.on('startCountdown', (countdownTime) => {
         socket.broadcast.emit('syncCountdown', countdownTime);
     });
