@@ -212,7 +212,7 @@ const Room: NextPage<{}> = () => {
                 const isCollidingWithOpponent = areCirclesColliding(opponentCircle!, puckCircle!);
                 const isCollidingWithHostGoalPost = (puckRect!.left <= hostGoalPostRect!.right && puckRect!.right >= hostGoalPostRect!.left && puckRect.bottom >= hostGoalPostRect!.top);
                 const isCollidingWithGuestGoalPost = (puckRect!.left <= guestGoalPostRect!.right && puckRect!.right >= guestGoalPostRect!.left && puckRect.top <= guestGoalPostRect!.bottom);
-                const collision = {
+                const isCollidingWithWall = {
                     left: puckRect!.left <= wholeStageRect!.left + STAGE_PADDING,
                     right: puckRect!.right >= wholeStageRect!.right - STAGE_PADDING,
                     top: puckRect!.top <= wholeStageRect!.top + STAGE_PADDING,
@@ -255,7 +255,7 @@ const Room: NextPage<{}> = () => {
                     socketInstance.emit('startCountdown', 3);
                     return;
                 }
-                else if (collision.left) {
+                else if (isCollidingWithWall.left) {
                     collisionCooldown = true;
                     velocity.x = velocity.x + velocity.x * 0.3;
                     velocity.x *= -1;
@@ -267,7 +267,7 @@ const Room: NextPage<{}> = () => {
                         else velocity.x = -MINIMUM_SPEED;
                     }
                 }
-                else if (collision.right) {
+                else if (isCollidingWithWall.right) {
                     collisionCooldown = true;
                     velocity.x = velocity.x - velocity.x * 0.3;
                     velocity.x *= -1;
@@ -279,7 +279,7 @@ const Room: NextPage<{}> = () => {
                         else velocity.x = -MINIMUM_SPEED;
                     }
                 }
-                else if (collision.top) {
+                else if (isCollidingWithWall.top) {
                     collisionCooldown = true;
                     velocity.y = velocity.y - velocity.y * 0.3;
                     velocity.y *= -1;
@@ -291,7 +291,7 @@ const Room: NextPage<{}> = () => {
                         else velocity.y = -MINIMUM_SPEED;
                     }
                 }
-                else if (collision.bottom) {
+                else if (isCollidingWithWall.bottom) {
                     collisionCooldown = true;
                     velocity.y = velocity.y + velocity.y * 0.3;
                     velocity.y *= -1;
