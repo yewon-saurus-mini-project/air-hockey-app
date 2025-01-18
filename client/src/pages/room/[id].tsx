@@ -156,18 +156,15 @@ const Room: NextPage<{}> = () => {
 
     useEffect(() => {
         // 게임 준비가 완료되어 puck이 생성된 시점
-        let player: HTMLDivElement | null = null;
-        let opponent: HTMLDivElement | null = null;
-
-        if (isHost === 'true') [player, opponent] = [hostPaddleRef.current, guestPaddleRef.current];
-        else return; // puck의 움직임, 충돌 처리는 모두 host에서 관리 및 전달
+        const [hostPaddle, guestPaddle] = [hostPaddleRef.current, guestPaddleRef.current];
+        if (isHost === 'false') return; // puck의 움직임, 충돌 처리는 모두 host에서 관리 및 전달
 
         const position = { x: puckPhysics.position.x, y: puckPhysics.position.y };
         const velocity = { x: puckPhysics.velocity.x, y: puckPhysics.velocity.y };
         let collisionCooldown = false; // 충돌 처리 쿨다운
         
         const update = () => {
-            if (player && puckRef.current) {
+            if (hostPaddle && puckRef.current) {
                 const puck = puckRef.current;
 
                 if (collisionCooldown) {
@@ -199,8 +196,8 @@ const Room: NextPage<{}> = () => {
                 });
 
                 // 요소의 위치와 크기 계산
-                const playerCircle = getCircleInfo(player);
-                const opponentCircle = getCircleInfo(opponent);
+                const hostCircle = getCircleInfo(hostPaddle);
+                const guestCircle = getCircleInfo(guestPaddle);
                 const puckCircle = getCircleInfo(puckRef.current);
                 const wholeStageRect = wholeStageRef.current?.getBoundingClientRect();
                 const puckRect = puckRef.current?.getBoundingClientRect();
@@ -208,8 +205,8 @@ const Room: NextPage<{}> = () => {
                 const guestGoalPostRect = guestGoalPostRef.current?.getBoundingClientRect();
 
                 // 충돌 여부 확인
-                const isCollidingWithPlayer = areCirclesColliding(playerCircle!, puckCircle!);
-                const isCollidingWithOpponent = areCirclesColliding(opponentCircle!, puckCircle!);
+                const isCollidingWithPlayer = areCirclesColliding(hostCircle!, puckCircle!);
+                const isCollidingWithOpponent = areCirclesColliding(guestCircle!, puckCircle!);
                 const isCollidingWithHostGoalPost = (puckRect!.left <= hostGoalPostRect!.right && puckRect!.right >= hostGoalPostRect!.left && puckRect.bottom >= hostGoalPostRect!.top);
                 const isCollidingWithGuestGoalPost = (puckRect!.left <= guestGoalPostRect!.right && puckRect!.right >= guestGoalPostRect!.left && puckRect.top <= guestGoalPostRect!.bottom);
                 const isCollidingWithWall = {
@@ -220,8 +217,8 @@ const Room: NextPage<{}> = () => {
                 };
         
                 if (isCollidingWithPlayer) {
-                    velocity.x += (playerCircle!.centerX - position.x < 0 ? position.x - playerCircle!.centerX : playerCircle!.centerX - position.x) * 0.01;
-                    velocity.y += (playerCircle!.centerY - position.y < 0 ? position.y - playerCircle!.centerY : playerCircle!.centerY - position.y) * 0.01;
+                    velocity.x += (hostCircle!.centerX - position.x < 0 ? position.x - hostCircle!.centerX : hostCircle!.centerX - position.x) * 0.01;
+                    velocity.y += (hostCircle!.centerY - position.y < 0 ? position.y - hostCircle!.centerY : hostCircle!.centerY - position.y) * 0.01;
 
                     if (Math.abs(velocity.x) > MAXIMUM_SPEED) {
                         if (velocity.x > 0) velocity.x = MAXIMUM_SPEED;
@@ -233,8 +230,8 @@ const Room: NextPage<{}> = () => {
                     }
                 }
                 else if (isCollidingWithOpponent) {
-                    velocity.x += (opponentCircle!.centerX - position.x > 0 ? position.x - opponentCircle!.centerX : opponentCircle!.centerX - position.x) * 0.01;
-                    velocity.y += (opponentCircle!.centerY - position.y > 0 ? position.y - opponentCircle!.centerY : opponentCircle!.centerY - position.y) * 0.01;
+                    velocity.x += (guestCircle!.centerX - position.x > 0 ? position.x - guestCircle!.centerX : guestCircle!.centerX - position.x) * 0.01;
+                    velocity.y += (guestCircle!.centerY - position.y > 0 ? position.y - guestCircle!.centerY : guestCircle!.centerY - position.y) * 0.01;
 
                     if (Math.abs(velocity.x) > MAXIMUM_SPEED) {
                         if (velocity.x > 0) velocity.x = MAXIMUM_SPEED;
