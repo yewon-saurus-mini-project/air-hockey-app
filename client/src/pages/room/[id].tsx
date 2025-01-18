@@ -242,6 +242,7 @@ const Room: NextPage<{}> = () => {
                     if (points.black === 0 && points.white === 0) setPoints({black: 0, white: 1}); // TODO: 첫 골에서 점수 카운팅이 '2'씩 됨.. 임시 조치
                     else setPoints((prev) => ({...prev, white: prev.white + 1}));
                     setCountdownTime(3);
+                    socketInstance.emit('startCountdown', 3);
                     return;
                 }
                 else if (isCollidingWithGuestGoalPost) {
@@ -251,6 +252,7 @@ const Room: NextPage<{}> = () => {
                     if (points.black === 0 && points.white === 0) setPoints({black: 1, white: 0}); // TODO: 첫 골에서 점수 카운팅이 '2'씩 됨.. 임시 조치
                     else setPoints((prev) => ({...prev, black: prev.black + 1}));
                     setCountdownTime(3);
+                    socketInstance.emit('startCountdown', 3);
                     return;
                 }
                 else if (collision.left) {
