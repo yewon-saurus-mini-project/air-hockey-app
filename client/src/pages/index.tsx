@@ -121,7 +121,7 @@ export default function Home() {
             />
           ))
         }
-        <div className='absolute right-6 bottom-6 z-10'>
+        <div className='absolute right-28 bottom-28 z-10'>
           <Button name={'방 생성'} onClick={handleClickCreateRoom} />
         </div>
       </div>
