@@ -74,6 +74,11 @@ socketio.on('connection', (socket) => {
         socket.broadcast.in(id).emit("reciveOpponentLocation", { paddleX, paddleY });
     });
 
+    // puck 위치 동기화
+    socket.on('sendPuckLocation', ({ id, puckX, puckY }) => {
+        socket.broadcast.in(id).emit("reciveOpponentLocation", { puckX, puckY });
+    });
+
     // 클라이언트가 연결 해제 시 방에서 제거
     socket.on('disconnect', () => {
         const roomName = `room-${socket.id}`;

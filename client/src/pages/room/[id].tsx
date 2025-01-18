@@ -171,23 +171,27 @@ const Room: NextPage<{}> = () => {
         const update = () => {
             if (hostPaddle && puckRef.current) {
                 const puck = puckRef.current;
+                let [puckX, puckY] = [`${position.x}px`, `${position.y}px`];
 
                 if (collisionCooldown) {
                     // 충돌 쿨다운 중이라면 위치만 갱신
-                    puck!.style.left = `${position.x}px`;
-                    puck!.style.top = `${position.y}px`;
+                    puck!.style.left = puckX;
+                    puck!.style.top = puckY;
+                    socketInstance.emit("sendPuckLocation", { id, puckX, puckY }); // host - puck 위치 동기화(보냄)
                     setTimeout(() => {
                         collisionCooldown = false;
                     }, 50);
                     requestAnimationFrame(update);
                     return;
                 }
-
+                
                 // puck 위치 업데이트
                 position.x += velocity.x;
                 position.y += velocity.y;
-                puck!.style.left = `${position.x}px`;
-                puck!.style.top = `${position.y}px`;
+                [puckX, puckY] = [`${position.x}px`, `${position.y}px`];
+                puck!.style.left = puckX;
+                puck!.style.top = puckY;
+                socketInstance.emit("sendPuckLocation", { id, puckX, puckY }); // host - puck 위치 동기화(보냄)
     
                 setPuckPhysics({
                     position: {
@@ -315,6 +319,28 @@ const Room: NextPage<{}> = () => {
                         else velocity.y = -MINIMUM_SPEED;
                     }
                 }
+            }
+            requestAnimationFrame(update);
+        }
+        update();
+
+        return () => {
+            cancelAnimationFrame(update as unknown as number);
+        }
+    }, [puckRef, points]);
+
+    useEffect(() => {
+        if (isHost === 'true') return;
+
+        const update = () => {
+            if (puckRef.current) {
+                const puck = puckRef.current;
+    
+                // guest - puck 위치 동기화(받음)
+                socketInstance.on('reciveOpponentLocation', ({ puckX, puckY }) => {          
+                    puck!.style.left = puckX;
+                    puck!.style.top = puckY;
+                });
             }
             requestAnimationFrame(update);
         }
