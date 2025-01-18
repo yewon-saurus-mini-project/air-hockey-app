@@ -21,6 +21,7 @@ const INITIAL_PUCK_PHYSICS = {
         y: Math.floor(Math.random() * 10) - 5,
     },
 };
+const POINT_NEEDED_TO_WIN = 10;
 
 const Room: NextPage<{}> = () => {
     const router = useRouter();
@@ -32,6 +33,7 @@ const Room: NextPage<{}> = () => {
         y: 0,
     });
     const [isReady, setIsReady] = useState(false);
+    const [gameover, setGameover] = useState(false);
     const [countdownTime, setCountdownTime] = useState(5);
     const [puckPhysics, setPuckPhysics] = useState(INITIAL_PUCK_PHYSICS);
     const [points, setPoints] = useState({
@@ -127,30 +129,33 @@ const Room: NextPage<{}> = () => {
     }, []);
 
     useEffect(() => {
-        // 게스트 입장 시, 카운트 다운
-        if (countdownTime <= 0) {
-            // puck 나타나기
-            const puck = puckRef.current;
-            puck!.style.left = `${puckPhysics.position.x}px`;
-            puck!.style.top = `${puckPhysics.position.y}px`;
-
-            return;
-        };
-
-        if (isReady) {
-            if (isHost === 'true') {
-                const remainingTime = countdownTime - 1;
-
-                setTimeout(() => {
-                    setCountdownTime(remainingTime);
-                    socketInstance.emit('startCountdown', remainingTime);
-                }, 1000);
-            }
+        // 승부가 결정되지 않은 상황에서만 실행
+        if (points.white < POINT_NEEDED_TO_WIN && points.black < POINT_NEEDED_TO_WIN) {
+            // 게스트 입장 시, 카운트 다운
+            if (countdownTime <= 0) {
+                // puck 나타나기
+                const puck = puckRef.current;
+                puck!.style.left = `${puckPhysics.position.x}px`;
+                puck!.style.top = `${puckPhysics.position.y}px`;
     
-            socketInstance.on('syncCountdown', (countdownTime) => {
-                // 상대방과 카운트 상황 동기화
-                setCountdownTime(countdownTime);
-            });
+                return;
+            };
+    
+            if (isReady) {
+                if (isHost === 'true') {
+                    const remainingTime = countdownTime - 1;
+    
+                    setTimeout(() => {
+                        setCountdownTime(remainingTime);
+                        socketInstance.emit('startCountdown', remainingTime);
+                    }, 1000);
+                }
+        
+                socketInstance.on('syncCountdown', (countdownTime) => {
+                    // 상대방과 카운트 상황 동기화
+                    setCountdownTime(countdownTime);
+                });
+            }
         }
     }, [isReady, countdownTime]);
 
@@ -320,11 +325,24 @@ const Room: NextPage<{}> = () => {
         }
     }, [puckRef, points]);
 
+    useEffect(() => {
+        if (points.white >= POINT_NEEDED_TO_WIN || points.black >= POINT_NEEDED_TO_WIN) {
+            setGameover(true);
+            setIsReady(false);
+        }
+    }, [points]);
+
     return (
         <>
             <div className='absolute left-3 top-3 z-10'>
                 {
-                    isReady && countdownTime > 0 ? <Alert message={countdownTime} /> : ''
+                    isReady && countdownTime > 0 && !gameover ? <Alert message={countdownTime} /> : ''
+                }
+                {
+                    points.black >= POINT_NEEDED_TO_WIN ? <Alert message={'Black Win'} /> : ''
+                }
+                {
+                    points.white >= POINT_NEEDED_TO_WIN ? <Alert message={'White Win'} /> : ''
                 }
                 {
                     isReady
@@ -334,10 +352,14 @@ const Room: NextPage<{}> = () => {
                         <div>{`${points.black} : ${points.white}`}</div>
                     </div>
                     :
+                    gameover
+                    ?
                     <Button name={'나가기'} onClick={() => {
                         router.push('/')
                         socketInstance.disconnect();
                     }} />
+                    :
+                    ''
                 }
             </div>
             <div ref={wholeStageRef}>
@@ -350,7 +372,7 @@ const Room: NextPage<{}> = () => {
                     <div ref={guestGoalPostRef} className="top-[391px] left-[95px] absolute w-60 h-1 bg-blue-300 rounded-full"></div>
                 </div>
                 {
-                    countdownTime === 0
+                    countdownTime === 0 && !gameover
                     ?
                     <div ref={puckRef} className="w-10 h-10 bg-gray-400 border-black border rounded-full absolute pointer-events-none">
                         <div className="w-6 h-6 bg-gray-300 border-black border rounded-full absolute pointer-events-none m-[7px]">
