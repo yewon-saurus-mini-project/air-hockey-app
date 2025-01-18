@@ -128,9 +128,8 @@ const Room: NextPage<{}> = () => {
     useEffect(() => {
         // 게스트 입장 시, 카운트 다운
         if (countdownTime <= 0) {
-            // puck 첫 등장
+            // puck 나타나기
             const puck = puckRef.current;
-            
             puck!.style.left = `${puckPhysics.position.x}px`;
             puck!.style.top = `${puckPhysics.position.y}px`;
 
@@ -210,8 +209,8 @@ const Room: NextPage<{}> = () => {
                 // 충돌 여부 확인
                 const isCollidingWithPlayer = areCirclesColliding(playerCircle!, puckCircle!);
                 const isCollidingWithOpponent = areCirclesColliding(opponentCircle!, puckCircle!);
-                const isCollidingWithHostGoalPost = (puckRect!.left >= hostGoalPostRect!.left && puckRect!.right <= hostGoalPostRect!.right && puckRect.bottom >= hostGoalPostRect!.top);
-                const isCollidingWithGuestGoalPost = (puckRect!.left >= guestGoalPostRect!.left && puckRect!.right <= guestGoalPostRect!.right && puckRect.top <= guestGoalPostRect!.bottom);
+                const isCollidingWithHostGoalPost = (puckRect!.left <= hostGoalPostRect!.right && puckRect!.right >= hostGoalPostRect!.left && puckRect.bottom >= hostGoalPostRect!.top);
+                const isCollidingWithGuestGoalPost = (puckRect!.left <= guestGoalPostRect!.right && puckRect!.right >= guestGoalPostRect!.left && puckRect.top <= guestGoalPostRect!.bottom);
                 const collision = {
                     left: puckRect!.left <= wholeStageRect!.left + STAGE_PADDING,
                     right: puckRect!.right >= wholeStageRect!.right - STAGE_PADDING,
@@ -237,19 +236,21 @@ const Room: NextPage<{}> = () => {
                 }
                 else if (isCollidingWithHostGoalPost) {
                     // guest(white) 득점
-                    setPoints((prev) => ({...prev, white: prev.white + 1}));
-                    // setPuckPhysics(INITIAL_PUCK_PHYSICS);
-                    // puck!.style.left = `${INITIAL_PUCK_PHYSICS.position.x}px`;
-                    // puck!.style.top = `${INITIAL_PUCK_PHYSICS.position.y}px`;
-                    // setCountdownTime(3);
+                    collisionCooldown = true;
+                    setPuckPhysics(INITIAL_PUCK_PHYSICS);
+                    if (points.black === 0 && points.white === 0) setPoints({black: 0, white: 1}); // TODO: 첫 골에서 점수 카운팅이 '2'씩 됨.. 임시 조치
+                    else setPoints((prev) => ({...prev, white: prev.white + 1}));
+                    setCountdownTime(3);
+                    return;
                 }
                 else if (isCollidingWithGuestGoalPost) {
                     // host(black) 득점
-                    setPoints((prev) => ({...prev, black: prev.black + 1}));
-                    // setPuckPhysics(INITIAL_PUCK_PHYSICS);
-                    // puck!.style.left = `${INITIAL_PUCK_PHYSICS.position.x}px`;
-                    // puck!.style.top = `${INITIAL_PUCK_PHYSICS.position.y}px`;
-                    // setCountdownTime(3);
+                    collisionCooldown = true;
+                    setPuckPhysics(INITIAL_PUCK_PHYSICS);
+                    if (points.black === 0 && points.white === 0) setPoints({black: 1, white: 0}); // TODO: 첫 골에서 점수 카운팅이 '2'씩 됨.. 임시 조치
+                    else setPoints((prev) => ({...prev, black: prev.black + 1}));
+                    setCountdownTime(3);
+                    return;
                 }
                 else if (collision.left) {
                     collisionCooldown = true;
@@ -307,22 +308,23 @@ const Room: NextPage<{}> = () => {
         return () => {
             cancelAnimationFrame(update as unknown as number);
         }
-    }, [puckRef]);
+    }, [puckRef, points]);
 
     return (
         <>
             <div className='absolute left-3 top-3 z-10'>
                 {
-                    countdownTime === 0
+                    isReady && countdownTime > 0
+                    ? <div className="absolute -left-3 -top-3 bg-black bg-opacity-30 text-white text-9xl w-[450px] h-[798px] leading-[798px] text-center">
+                        {countdownTime}
+                    </div> : ''
+                }
+                {
+                    isReady
                     ?
                     <div className="text-center">
                         <div>Black : White</div>
                         <div>{`${points.black} : ${points.white}`}</div>
-                    </div>
-                    : isReady
-                    ?
-                    <div className="absolute -left-3 -top-3 bg-black bg-opacity-30 text-white text-9xl w-[450px] h-[798px] leading-[798px] text-center">
-                        {countdownTime}
                     </div>
                     :
                     <Button name={'나가기'} onClick={() => {
