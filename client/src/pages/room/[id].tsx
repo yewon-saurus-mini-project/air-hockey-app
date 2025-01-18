@@ -3,6 +3,7 @@ import { useRouter } from "next/router";
 import { useEffect, useState, useRef } from "react";
 
 import { Button } from "../components/Button";
+import { Alert } from "../components/Alert";
 
 import { useSocket } from "../_lib/useSocket";
 import { getCircleInfo, areCirclesColliding } from "../_lib/collision";
@@ -314,10 +315,7 @@ const Room: NextPage<{}> = () => {
         <>
             <div className='absolute left-3 top-3 z-10'>
                 {
-                    isReady && countdownTime > 0
-                    ? <div className="absolute -left-3 -top-3 bg-black bg-opacity-30 text-white text-9xl w-[450px] h-[798px] leading-[798px] text-center">
-                        {countdownTime}
-                    </div> : ''
+                    isReady && countdownTime > 0 ? <Alert message={countdownTime} /> : ''
                 }
                 {
                     isReady
