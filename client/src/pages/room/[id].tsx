@@ -378,6 +378,12 @@ const Room: NextPage<{}> = () => {
                         <div>{`${points.black} : ${points.white}`}</div>
                     </div>
                     :
+                    <Button name={'나가기'} onClick={() => {
+                        router.push('/')
+                        socketInstance.disconnect();
+                    }} />
+                }
+                {
                     gameover
                     ?
                     <Button name={'나가기'} onClick={() => {
