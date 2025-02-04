@@ -64,12 +64,12 @@ socketio.on('connection', (socket) => {
     });
 
     // 카운트 다운
-    socket.on('startCountdown', (countdownTime) => {
-        socket.broadcast.emit('syncCountdown', countdownTime);
+    socket.on('startCountdown', ({ id, countdownTime }) => {
+        socket.broadcast.in(id).emit('syncCountdown', countdownTime);
     });
 
     // 상대방 paddle 위치 동기화
-    socket.on('sendOpponentLocation', ({ id, paddleX, paddleY }) => {
+    socket.on('sendOpponentLocation', ({ id, paddleX, paddleY }) => {   
         // id: roomId
         socket.broadcast.in(id).emit("reciveOpponentLocation", { paddleX, paddleY });
     });

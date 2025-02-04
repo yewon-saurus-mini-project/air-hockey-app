@@ -21,6 +21,8 @@ const INITIAL_PUCK_PHYSICS = {
         y: Math.floor(Math.random() * 10) - 5,
     },
 };
+const INITIAL_COUNT_TIME = 5;
+const SCORING_COUNT_TIME = 3;
 const POINT_NEEDED_TO_WIN = 10;
 
 const Room: NextPage<{}> = () => {
@@ -34,7 +36,7 @@ const Room: NextPage<{}> = () => {
     });
     const [isReady, setIsReady] = useState(false);
     const [gameover, setGameover] = useState(false);
-    const [countdownTime, setCountdownTime] = useState(5);
+    const [countdownTime, setCountdownTime] = useState(INITIAL_COUNT_TIME);
     const [puckPhysics, setPuckPhysics] = useState(INITIAL_PUCK_PHYSICS);
     const [points, setPoints] = useState({
         black: 0,
@@ -147,7 +149,7 @@ const Room: NextPage<{}> = () => {
     
                     setTimeout(() => {
                         setCountdownTime(remainingTime);
-                        socketInstance.emit('startCountdown', remainingTime);
+                        socketInstance.emit('startCountdown', { id, countdownTime: remainingTime });
                     }, 1000);
                 }
         
@@ -262,8 +264,8 @@ const Room: NextPage<{}> = () => {
                     setPoints(updatedPoints);
                     socketInstance.emit("sendPoints", { id, updatedPoints });
                     
-                    setCountdownTime(3);
-                    socketInstance.emit('startCountdown', 3);
+                    setCountdownTime(SCORING_COUNT_TIME);
+                    socketInstance.emit('startCountdown', { id, countdownTime: SCORING_COUNT_TIME });
                     return;
                 }
                 else if (isCollidingWithGuestGoalPost) {
@@ -277,8 +279,8 @@ const Room: NextPage<{}> = () => {
                     setPoints(updatedPoints);
                     socketInstance.emit("sendPoints", { id, updatedPoints });
 
-                    setCountdownTime(3);
-                    socketInstance.emit('startCountdown', 3);
+                    setCountdownTime(SCORING_COUNT_TIME);
+                    socketInstance.emit('startCountdown', { id, countdownTime: SCORING_COUNT_TIME });
                     return;
                 }
                 else if (isCollidingWithWall.left) {
