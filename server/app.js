@@ -76,7 +76,7 @@ socketio.on('connection', (socket) => {
 
     // puck 위치 동기화
     socket.on('sendPuckLocation', ({ id, puckX, puckY }) => {
-        socket.broadcast.in(id).emit("reciveOpponentLocation", { puckX, puckY });
+        socket.broadcast.in(id).emit("recivePuckLocation", { puckX, puckY });
     });
 
     // 점수 동기화
