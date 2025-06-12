@@ -80,10 +80,9 @@ const Room: NextPage<{}> = () => {
             mouseX = Math.max(minX, Math.min(maxX, mouseX));
             mouseY = Math.max(minY, Math.min(maxY, mouseY));
 
-            const [paddleX, paddleY] = [`${mouseX - 28}px`, `${mouseY - 28}px`];
+            const [paddleX, paddleY] = [mouseX - 28, mouseY - 28];
 
-            paddle!.style.left = paddleX;
-            paddle!.style.top = paddleY;
+            paddle!.style.transform = `translate(${paddleX}px, ${paddleY}px)`;
 
             // 상대방에 paddle 위치 전송
             socketInstance.emit("sendOpponentLocation", { id, paddleX, paddleY });
@@ -120,9 +119,8 @@ const Room: NextPage<{}> = () => {
         });
 
         // 상대방 paddle 위치 동기화
-        socketInstance.on('reciveOpponentLocation', ({ paddleX, paddleY }) => {          
-            opponentPaddle!.style.left = paddleX;
-            opponentPaddle!.style.top = paddleY;
+        socketInstance.on('reciveOpponentLocation', ({ paddleX, paddleY }) => {
+            opponentPaddle!.style.transform = `translate(${paddleX}px, ${paddleY}px)`;
         });
 
         return () => {
@@ -349,7 +347,7 @@ const Room: NextPage<{}> = () => {
                 const puck = puckRef.current;
     
                 // guest - puck 위치 동기화(받음)
-                socketInstance.on('reciveOpponentLocation', ({ puckX, puckY }) => {          
+                socketInstance.on('recivePuckLocation', ({ puckX, puckY }) => {          
                     puck!.style.left = puckX;
                     puck!.style.top = puckY;
                 });
@@ -416,11 +414,11 @@ const Room: NextPage<{}> = () => {
             </div>
             <div ref={wholeStageRef}>
                 <div ref={hostStageRef} className="bg-red-100 h-[399px] relative">
-                    <div ref={hostPaddleRef} className="w-14 h-14 bg-black border-white border rounded-full absolute pointer-events-none"></div>
+                    <div ref={hostPaddleRef} className="w-14 h-14 bg-black border-white border rounded-full absolute pointer-events-none will-change-transform"></div>
                     <div ref={hostGoalPostRef} className="top-[391px] left-[95px] absolute w-60 h-1 bg-red-300 rounded-full"></div>
                 </div>
                 <div ref={guestStageRef} className="bg-blue-100 h-[399px] relative">
-                    <div ref={guestPaddleRef} className="w-14 h-14 bg-white border-black border rounded-full absolute pointer-events-none"></div>
+                    <div ref={guestPaddleRef} className="w-14 h-14 bg-white border-black border rounded-full absolute pointer-events-none will-change-transform"></div>
                     <div ref={guestGoalPostRef} className="top-[391px] left-[95px] absolute w-60 h-1 bg-blue-300 rounded-full"></div>
                 </div>
                 {
